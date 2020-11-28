@@ -26,7 +26,8 @@ class DBEngine:
     def execute(self, table_id, select_index, aggregation_index, conditions, lower=True):
         if not table_id.startswith('table'):
             table_id = 'table_{}'.format(table_id.replace('-', '_'))
-        table_info = self.db.query('SELECT sql from sqlite_master WHERE tbl_name = :name', name=table_id).all()[0].sql.replace('\n','')
+        with self.db.get_connection() as conn:
+            table_info = conn.query('SELECT sql from sqlite_master WHERE tbl_name = :name', name=table_id).all()[0].sql.replace('\n','')
         schema_str = schema_re.findall(table_info)[0]
         schema = {}
         for tup in schema_str.split(', '):
@@ -61,14 +62,14 @@ class DBEngine:
             where_str = 'WHERE ' + ' AND '.join(where_clause)
         query = 'SELECT {} AS result FROM {} {}'.format(select, table_id, where_str)
         #print query
-        out = self.db.query(query, **where_map)
-
-
-        return [o.result for o in out]
+        with self.db.get_connection() as conn:
+            out = conn.query(query, **where_map)
+            return [o.result for o in out]
     def execute_return_query(self, table_id, select_index, aggregation_index, conditions, lower=True):
         if not table_id.startswith('table'):
             table_id = 'table_{}'.format(table_id.replace('-', '_'))
-        table_info = self.db.query('SELECT sql from sqlite_master WHERE tbl_name = :name', name=table_id).all()[0].sql.replace('\n','')
+        with self.db.get_connection() as conn:
+            table_info = conn.query('SELECT sql from sqlite_master WHERE tbl_name = :name', name=table_id).all()[0].sql.replace('\n','')
         schema_str = schema_re.findall(table_info)[0]
         schema = {}
         for tup in schema_str.split(', '):
@@ -99,12 +100,13 @@ class DBEngine:
             where_str = 'WHERE ' + ' AND '.join(where_clause)
         query = 'SELECT {} AS result FROM {} {}'.format(select, table_id, where_str)
         #print query
-        out = self.db.query(query, **where_map)
-
-
-        return [o.result for o in out], query
+        with self.db.get_connection() as conn:
+            out = conn.query(query, **where_map)
+            return [o.result for o in out], query
+        
     def show_table(self, table_id):
         if not table_id.startswith('table'):
             table_id = 'table_{}'.format(table_id.replace('-', '_'))
-        rows = self.db.query('select * from ' +table_id)
-        print(rows.dataset)
+        with self.db.get_connection() as conn:
+            rows = conn.query('select * from ' +table_id)
+            print(rows.dataset)
