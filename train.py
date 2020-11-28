@@ -645,6 +645,8 @@ if __name__ == '__main__':
     args = construct_hyper_param(parser)
 
     ## 2. Paths
+    import os
+    os.environ["CORENLP_HOME"] = "/root/stanza_corenlp"
     path_h = './data_and_model'  # '/home/wonseok'
     path_wikisql = './data_and_model'  # os.path.join(path_h, 'data', 'wikisql_tok')
     BERT_PT_PATH = path_wikisql
@@ -741,19 +743,27 @@ if __name__ == '__main__':
         # from stanza.nlp.corenlp import CoreNLPClient
         # client = CoreNLPClient(server='http://localhost:9000', default_annotators='ssplit,tokenize'.split(','))
 
-        import corenlp
+        # import corenlp
+        # client = corenlp.CoreNLPClient(annotators='ssplit,tokenize'.split(','))
 
-        client = corenlp.CoreNLPClient(annotators='ssplit,tokenize'.split(','))
+        from stanza.server import CoreNLPClient
+        client = CoreNLPClient(server='http://localhost:9000', annotators='ssplit,tokenize'.split(','))
+
 
         nlu1 = "Which company have more than 100 employees?"
         path_db = './data_and_model'
         db_name = 'ctable'
-        data_table = load_jsonl('./data_and_model/ctable.tables.jsonl')
+        db_name = 'test'
+        print(f"Load ./data_and_model/{db_name}.tables.jsonl ...")
+        data_table = load_jsonl(f'./data_and_model/{db_name}.tables.jsonl')
+        print(f"Finished loading ./data_and_model/{db_name}.tables.jsonl")
         table_name = 'ftable1'
+        table_name = '1_10015132_16'
         n_Q = 100000 if args.infer_loop else 1
         for i in range(n_Q):
             if n_Q > 1:
                 nlu1 = input('Type question: ')
+            print(f"Infer: {nlu1} ...")
             pr_sql_i, pr_ans = infer(
                 nlu1,
                 table_name, data_table, path_db, db_name,
